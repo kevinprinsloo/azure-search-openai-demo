@@ -380,6 +380,65 @@ async def setup_clients():
         query_speller=AZURE_SEARCH_QUERY_SPELLER,
     )
 
+@bp.route("/api/rubric-evaluation", methods=["POST"])
+async def evaluate_rubric():
+    if not request.is_json:
+        return jsonify({"error": "request must be json"}), 415
+    request_json = await request.get_json()
+
+    context = request_json.get("context", {})
+    auth_helper = current_app.config[CONFIG_AUTH_CLIENT]
+    context["auth_claims"] = await auth_helper.get_auth_claims_if_enabled(request.headers)
+    try:
+        rubric_evaluation_approach = current_app.config["rubric_evaluation_approach"]
+
+        rubric_criteria = request_json["rubric_criteria"]  
+        messages = request_json.get("messages")  
+        if messages is None:  
+            return jsonify({"error": "The 'messages' key is missing in the request JSON"}), 400  
+        
+        # Convert the messages to a list of dictionaries  
+        messages = [{"role": msg["role"], "content": msg["content"]} for msg in messages]  
+        
+        print("Calling RubricEvaluationApproach.run method in test function")  
+        rubric_answers = await rubric_evaluation_approach.run(rubric_criteria, messages, context=context)  
+
+        if isinstance(rubric_answers, dict):
+            return jsonify(rubric_answers)
+        else:
+            response = await make_response(format_as_ndjson(rubric_answers))
+            response.timeout = None  # type: ignore
+            response.mimetype = "application/json-lines"
+            return response
+    except Exception as error:
+        return error_response(error, "/evaluate_rubric")
+
+
+UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploaded_csv")
+@bp.route("/upload", methods=["POST"])
+async def upload_file():
+    logging.debug("Upload request received")  
+    logging.debug("Headers: %s", request.headers)  
+    logging.debug("Files: %s", request.files)  
+    AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT")
+    AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
+
+    file = await request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file provided"}), 400
+
+    # Initialize BlobManager
+    blob_manager = BlobManager(
+        endpoint=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
+        container=AZURE_STORAGE_CONTAINER,
+        credential=CONFIG_CREDENTIAL,
+    )
+
+    # Upload the file to the specified folder
+    file_content = file.read()  # Read the file content
+    await blob_manager.upload_blob(file_content, file.filename, folder=UPLOAD_FOLDER)
+
+    return jsonify({"message": "File uploaded successfully"})
 
 @bp.after_app_serving
 async def close_clients():

@@ -10,6 +10,8 @@ import "./index.css";
 
 import Layout from "./pages/layout/Layout";
 import Chat from "./pages/chat/Chat";
+import Loading from "./pages/loading/Loading";  
+import Rubric from "./pages/rubric/Rubric";
 
 var layout;
 if (useLogin) {
@@ -40,26 +42,34 @@ if (useLogin) {
 
 initializeIcons();
 
-const router = createHashRouter([
-    {
-        path: "/",
-        element: layout,
-        children: [
-            {
-                index: true,
-                element: <Chat />
-            },
-            {
-                path: "qa",
-                lazy: () => import("./pages/oneshot/OneShot")
-            },
-            {
-                path: "*",
-                lazy: () => import("./pages/NoPage")
-            }
-        ]
-    }
-]);
+const router = createHashRouter([  
+    {  
+      path: "/",  
+      element: layout,  
+      children: [  
+        {  
+          index: true,  
+          element: <Loading />,  
+        },  
+        {  
+          path: "chat",  
+          element: <Chat />,  
+        },  
+        {  
+          path: "rubic",  
+          element: <Rubric />,  
+        },  
+        {  
+          path: "qa",  
+          lazy: () => import("./pages/oneshot/OneShot"),  
+        },  
+        {  
+          path: "*",  
+          lazy: () => import("./pages/NoPage"),  
+        },  
+      ],  
+    },  
+  ]);  
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>

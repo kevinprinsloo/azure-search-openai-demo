@@ -52,3 +52,21 @@ export async function chatApi(request: ChatAppRequest, idToken: string | undefin
 export function getCitationFilePath(citation: string): string {
     return `${BACKEND_URI}/content/${citation}`;
 }
+
+// In frontend/src/api/api.ts
+
+export async function evaluateRubric(rubricCriteria: any[], messages: any[]) {  
+    const response = await fetch('/api/rubric-evaluation', {  
+      method: 'POST',  
+      headers: {  
+        'Content-Type': 'application/json',  
+      },  
+      body: JSON.stringify({ rubric_criteria: rubricCriteria, messages: messages }),  
+    });  
+    
+    if (!response.ok) {  
+      throw new Error(`Error: ${response.statusText}`);  
+    }  
+    
+    return await response.json();
+}
