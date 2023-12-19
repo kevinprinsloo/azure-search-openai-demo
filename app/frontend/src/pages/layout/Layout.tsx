@@ -7,7 +7,6 @@ import { useLogin } from "../../authConfig";
 
 import { LoginButton } from "../../components/LoginButton";
 
-
 const Layout = () => {
     const [showUploadModal, setShowUploadModal] = useState(false);
 
@@ -66,8 +65,7 @@ const Layout = () => {
                         {useLogin && <LoginButton />}
                     </div>
                 </div>
-                <div className={styles.headerBottom}>
-                </div>
+                <div className={styles.headerBottom}></div>
             </header>
             <Outlet />
         </div>
