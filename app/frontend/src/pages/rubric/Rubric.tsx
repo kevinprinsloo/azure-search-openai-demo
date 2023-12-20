@@ -20,8 +20,10 @@ interface ResponseItem {
 }
 
 const RubricEvaluation = () => {
+    const [runAnalysis, setRunAnalysis] = useState(false);
+
     const [rubricCriteria, setRubricCriteria] = useState<string[]>([
-        "Is our liability limited, if so what is the amount of the liability cap?",
+        "Is our liability limited, if so what is the amount of the liability cap?"
         // "What losses are included and excluded from our liability? (e.g. confidentiality, data breaches)",
         // "Is the supplier’s liability limited, if so what is the amount of the cap?"
         // "What losses are included or excluded from the supplier’s liability?",
@@ -152,34 +154,69 @@ const RubricEvaluation = () => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileUpload = async (fileList: FileList | null) => {
+    // const handleFileUpload = async (fileList: FileList | null) => {
+    //     if (fileList && fileList.length > 0) {
+    //         setIsUploading(true);
+    //         const file = fileList[0];
+    //         setUploadedFileName(file.name);
+
+    //         // Create a FormData object and append the file
+    //         const formData = new FormData();
+    //         formData.append("file", file);
+
+    //         // Send a POST request to the backend
+    //         const response = await fetch("/upload", {
+    //             method: "POST",
+    //             body: formData
+    //         });
+
+    //         if (!response.ok) {
+    //             console.error("File upload failed");
+    //         }
+
+    //         setIsUploading(false);
+    //     }
+    // };
+    const handleFileUpload = (fileList: FileList | null) => {
         if (fileList && fileList.length > 0) {
-            setIsUploading(true); 
+            setIsUploading(true);
             const file = fileList[0];
             setUploadedFileName(file.name);
-    
+
             // Create a FormData object and append the file
             const formData = new FormData();
-            formData.append('file', file);
-    
-            // Send a POST request to the backend
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-    
-            if (!response.ok) {
-                console.error('File upload failed');
-            }
-    
-            setIsUploading(false); 
+            formData.append("file", file);
+
+            // Create a new XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+
+            // Set up the request
+            xhr.open("POST", "/upload", true);
+
+            // Set up a listener to track upload progress
+            xhr.upload.onprogress = event => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    setUploadProgress(percentComplete); // Update the state with the progress
+                }
+            };
+
+            // Set up a listener for when the request finishes
+            xhr.onloadend = () => {
+                if (xhr.status === 200) {
+                    console.log("File upload successful");
+                } else {
+                    console.error("File upload failed");
+                }
+                setIsUploading(false);
+                setUploadProgress(0); // Reset the progress
+            };
+
+            // Send the FormData
+            xhr.send(formData);
         }
     };
-
-    const onButtonClick = () => {
-        // `current` points to the mounted file input element
-        fileInputRef.current?.click();
-    };
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
@@ -200,31 +237,32 @@ const RubricEvaluation = () => {
     const handleDropdownFocus = () => {
         setIsDropdownFocused(true);
     };
-    
+
     // Event handler for when the dropdown loses focus
     const handleDropdownBlur = () => {
         setIsDropdownFocused(false);
     };
+
     // Use an effect to process all rubric questions when the component is mounted
     useEffect(() => {
-        let isMounted = true; // Add this line
+        let isMounted = true;
 
-        (async () => {
-            if (isMounted) {
-                setIsAnalyzing(true);
-            }
-            await processAllQuestions();
-            if (isMounted) {
-                setIsAnalyzing(false);
-            }
-        })();
+        if (runAnalysis) {
+            (async () => {
+                if (isMounted) {
+                    setIsAnalyzing(true);
+                }
+                await processAllQuestions();
+                if (isMounted) {
+                    setIsAnalyzing(false);
+                }
+            })();
+        }
 
-        // Cleanup function
         return () => {
             isMounted = false;
         };
-    }, []);
-    
+    }, [runAnalysis]); // Add runAnalysis as a dependency
 
     return (
         <div className={styles.uploadBtnWrapper}>
@@ -239,6 +277,9 @@ const RubricEvaluation = () => {
                 <button type="button" className={styles.btn} onClick={handleShow}>
                     Upload PDF
                 </button>
+                <button type="button" className={styles.btn} onClick={() => setRunAnalysis(true)}>
+                    Run Analysis
+                </button>
             </div>
             <Modal show={showModal} onHide={handleClose}>
                 <Modal.Header closeButton>
@@ -247,13 +288,29 @@ const RubricEvaluation = () => {
                 <Modal.Body>
                     <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={event => handleFileUpload(event.target.files)} />
                     <div className="dragDropZone" onDragOver={onDragOver} onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
-                        {uploadedFileName ? <p>{uploadedFileName}</p> : <p>Drop files here to upload or click to select a file</p>}
+                        {isUploading ? (
+                            <>
+                                <p>Uploading {uploadedFileName}...</p>
+                                <div className="progress-bar-container">
+                                    <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
+                                </div>
+                            </>
+                        ) : (
+                            <p>Drop files here to upload or click to select a file</p>
+                        )}
                     </div>
                 </Modal.Body>
+
                 <Modal.Footer>
                     {isUploading && (
                         <button type="button" className={styles.uploadInProgressButton} disabled>
                             Uploading...
+                            <>
+                                <p>Uploading {uploadedFileName}...</p>
+                                <div className="progress-bar-container">
+                                    <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
+                                </div>
+                            </>
                         </button>
                     )}
                     <Button variant="secondary" onClick={handleClose}>
