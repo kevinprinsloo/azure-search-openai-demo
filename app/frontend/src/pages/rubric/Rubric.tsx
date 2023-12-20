@@ -7,12 +7,11 @@ import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel
 import styles from "./Rubric.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Spinner from "react-bootstrap/Spinner";
-import { uploadFile } from "./uploadFile";
+// import { uploadFile } from "./uploadFile";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 
 import Select from "react-select";
-import OptionTypeBase from "react-select";
 
 interface ResponseItem {
     criterion: string;
@@ -23,8 +22,8 @@ interface ResponseItem {
 const RubricEvaluation = () => {
     const [rubricCriteria, setRubricCriteria] = useState<string[]>([
         "Is our liability limited, if so what is the amount of the liability cap?",
-        "What losses are included and excluded from our liability? (e.g. confidentiality, data breaches)",
-        "Is the supplier’s liability limited, if so what is the amount of the cap?"
+        // "What losses are included and excluded from our liability? (e.g. confidentiality, data breaches)",
+        // "Is the supplier’s liability limited, if so what is the amount of the cap?"
         // "What losses are included or excluded from the supplier’s liability?",
         // "Does the supplier provide an indemnity and if so what does this cover and what losses are included and excluded?",
         // "Do we provide an indemnity and if so what does this cover and what losses are included and excluded?",
@@ -79,7 +78,7 @@ const RubricEvaluation = () => {
 
     const client = useLogin ? useMsal().instance : undefined;
 
-    const makeApiRequest = async (question: string) => {
+    const makeApiRequest = async (question: string, retries = 5): Promise<ChatAppResponse> => {
         const request: ChatAppRequest = {
             messages: [{ content: question, role: "user" }],
             session_state: null // Add this line
@@ -87,37 +86,43 @@ const RubricEvaluation = () => {
 
         const token = client ? await getToken(client) : undefined;
 
-        // const response = await chatApi(request, token?.accessToken);
-        const response = await chatApi(request, token);
+        try {
+            const response = await chatApi(request, token);
 
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+
+            const parsedResponse: ChatAppResponseOrError = await response.json();
+            if ("error" in parsedResponse) {
+                throw new Error(parsedResponse.error);
+            }
+
+            return parsedResponse as ChatAppResponse;
+        } catch (error) {
+            if (retries > 0) {
+                // If request failed, wait for 1 second before retrying
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return makeApiRequest(question, retries - 1);
+            } else {
+                throw error;
+            }
         }
-
-        const parsedResponse: ChatAppResponseOrError = await response.json();
-        if ("error" in parsedResponse) {
-            throw new Error(parsedResponse.error);
-        }
-
-        return parsedResponse as ChatAppResponse;
     };
 
     // Function to process all rubric questions at once
     const processAllQuestions = async () => {
         try {
-            const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-            const newResponses = [];
-
-            for (const criterion of rubricCriteria) {
-                const response = await makeApiRequest(criterion);
-                newResponses.push({
-                    criterion: criterion,
-                    response: response.choices[0].message.content,
-                    choices: response.choices
-                });
-
-                await delay(1000); // Add a delay of 1000ms (1 second) between each request
-            }
+            const newResponses = await Promise.all(
+                rubricCriteria.map(async criterion => {
+                    const response = await makeApiRequest(criterion);
+                    return {
+                        criterion: criterion,
+                        response: response.choices[0].message.content,
+                        choices: response.choices
+                    };
+                })
+            );
 
             setResponses(newResponses);
         } catch (error) {
@@ -149,11 +154,25 @@ const RubricEvaluation = () => {
 
     const handleFileUpload = async (fileList: FileList | null) => {
         if (fileList && fileList.length > 0) {
-            setIsUploading(true); // Set isUploading to true
+            setIsUploading(true); 
             const file = fileList[0];
             setUploadedFileName(file.name);
-            await uploadFile(file); // Call the uploadFile function
-            setIsUploading(false); // Set isUploading back to false
+    
+            // Create a FormData object and append the file
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            // Send a POST request to the backend
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+    
+            if (!response.ok) {
+                console.error('File upload failed');
+            }
+    
+            setIsUploading(false); 
         }
     };
 
@@ -177,6 +196,15 @@ const RubricEvaluation = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedFileName, setUploadedFileName] = useState("");
 
+    const [isDropdownFocused, setIsDropdownFocused] = useState(false);
+    const handleDropdownFocus = () => {
+        setIsDropdownFocused(true);
+    };
+    
+    // Event handler for when the dropdown loses focus
+    const handleDropdownBlur = () => {
+        setIsDropdownFocused(false);
+    };
     // Use an effect to process all rubric questions when the component is mounted
     useEffect(() => {
         let isMounted = true; // Add this line
@@ -196,6 +224,7 @@ const RubricEvaluation = () => {
             isMounted = false;
         };
     }, []);
+    
 
     return (
         <div className={styles.uploadBtnWrapper}>
@@ -208,15 +237,15 @@ const RubricEvaluation = () => {
             ) : null}
             <div className={styles.uploadButtonContainer}>
                 <button type="button" className={styles.btn} onClick={handleShow}>
-                    Upload CSV
+                    Upload PDF
                 </button>
             </div>
             <Modal show={showModal} onHide={handleClose}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Upload CSV</Modal.Title>
+                    <Modal.Title>Upload PDF</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <input ref={fileInputRef} type="file" accept=".csv" style={{ display: "none" }} onChange={event => handleFileUpload(event.target.files)} />
+                    <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={event => handleFileUpload(event.target.files)} />
                     <div className="dragDropZone" onDragOver={onDragOver} onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
                         {uploadedFileName ? <p>{uploadedFileName}</p> : <p>Drop files here to upload or click to select a file</p>}
                     </div>
@@ -234,9 +263,13 @@ const RubricEvaluation = () => {
             </Modal>
             <div className={styles.rubricWrapper}>
                 <div id="rubric-container" className={styles.rubricContainer} style={{ width: `${splitterPosition}%` }}>
+                    <p className={styles.instructions}>Select a criterion from the dropdown menu:</p>
                     <Select
+                        className="select"
                         options={[{ value: "", label: "All Criteria" }, ...options]}
                         onChange={option => setSelectedCriteria(option ? option.value : null)}
+                        onFocus={handleDropdownFocus}
+                        onBlur={handleDropdownBlur}
                     />
                     <table className={styles.table}>
                         <thead>

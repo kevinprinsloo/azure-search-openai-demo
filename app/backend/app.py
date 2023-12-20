@@ -31,6 +31,12 @@ from quart import (
 )
 from quart_cors import cors
 
+from werkzeug.utils import secure_filename  
+import subprocess
+
+
+
+
 from approaches.approach import Approach
 from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
 from approaches.chatreadretrievereadvision import ChatReadRetrieveReadVisionApproach
@@ -59,7 +65,6 @@ bp = Blueprint("routes", __name__, static_folder="static")
 # Fix Windows registry issue with mimetypes
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
-
 
 @bp.route("/")
 async def index():
@@ -206,6 +211,123 @@ def auth_setup():
 def config():
     return jsonify({"showGPT4VOptions": current_app.config[CONFIG_GPT4V_DEPLOYED]})
 
+# @bp.route('/upload', methods=['POST'])    
+# async def upload_file():    
+#     # Check if a file was sent    
+#     files = await request.files  
+#     if 'file' not in files:    
+#         return 'No file part', 400    
+#     file = files['file']    
+    
+#     # If the user does not select a file, the browser might    
+#     # submit an empty file without a filename.    
+#     if file.filename == '':    
+#         return 'No selected file', 400    
+    
+#     # Save the file to the data/ folder    
+#     filename = secure_filename(file.filename)    
+#     file_path = os.path.join('/data/', filename) 
+#     # os.makedirs(os.path.dirname(file_path), exist_ok=True)   
+#     await file.save(file_path)   
+  
+#     script_dir = os.path.dirname(os.path.realpath(__file__))
+#     print("=====================================")
+#     print(script_dir)
+#     script_path = os.path.join(script_dir, 'scripts', 'prepdocs.sh')
+#     #subprocess.run([script_path, '--uploaded_file', file_path])
+#     # # Call the prepdocs script with the --uploaded_file argument  
+#     subprocess.run(['python', './scripts/prepdocs.py', '--uploaded_file', file_path])   
+  
+#     return 'File uploaded and processed successfully'  
+
+@bp.route('/upload', methods=['POST'])
+async def upload_file():
+    
+    AZURE_FORMRECOGNIZER_RESOURCE_GROUP=os.environ["AZURE_FORMRECOGNIZER_RESOURCE_GROUP"]
+    AZURE_FORMRECOGNIZER_SERVICE=os.environ["AZURE_FORMRECOGNIZER_SERVICE"]
+    AZURE_KEY_VAULT_NAME=""
+    AZURE_STORAGE_ACCOUNT = os.environ["AZURE_STORAGE_ACCOUNT"]
+    AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
+    AZURE_SEARCH_SERVICE = os.environ["AZURE_SEARCH_SERVICE"]
+    AZURE_SEARCH_INDEX = os.environ["AZURE_SEARCH_INDEX"]
+    VISION_SECRET_NAME = os.getenv("VISION_SECRET_NAME")
+    AZURE_KEY_VAULT_NAME = os.getenv("AZURE_KEY_VAULT_NAME")
+    # Shared by all OpenAI deployments
+    OPENAI_HOST = os.getenv("OPENAI_HOST", "azure")
+    OPENAI_CHATGPT_MODEL = os.environ["AZURE_OPENAI_CHATGPT_MODEL"]
+    OPENAI_EMB_MODEL = os.getenv("AZURE_OPENAI_EMB_MODEL_NAME", "text-embedding-ada-002")
+    # Used with Azure OpenAI deployments
+    AZURE_OPENAI_SERVICE = os.getenv("AZURE_OPENAI_SERVICE")
+    AZURE_OPENAI_GPT4V_DEPLOYMENT = os.environ.get("AZURE_OPENAI_GPT4V_DEPLOYMENT")
+    AZURE_OPENAI_GPT4V_MODEL = os.environ.get("AZURE_OPENAI_GPT4V_MODEL")
+    AZURE_OPENAI_CHATGPT_DEPLOYMENT = os.getenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT") if OPENAI_HOST == "azure" else None
+    AZURE_OPENAI_EMB_DEPLOYMENT = os.getenv("AZURE_OPENAI_EMB_DEPLOYMENT") if OPENAI_HOST == "azure" else None
+    AZURE_VISION_ENDPOINT = os.getenv("AZURE_VISION_ENDPOINT", "")
+    # Used only with non-Azure OpenAI deployments
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_ORGANIZATION = os.getenv("OPENAI_ORGANIZATION")
+
+    AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID")
+    AZURE_USE_AUTHENTICATION = os.getenv("AZURE_USE_AUTHENTICATION", "").lower() == "true"
+    AZURE_ENFORCE_ACCESS_CONTROL = os.getenv("AZURE_ENFORCE_ACCESS_CONTROL", "").lower() == "true"
+    AZURE_SERVER_APP_ID = os.getenv("AZURE_SERVER_APP_ID")
+    AZURE_SERVER_APP_SECRET = os.getenv("AZURE_SERVER_APP_SECRET")
+    AZURE_CLIENT_APP_ID = os.getenv("AZURE_CLIENT_APP_ID")
+    AZURE_AUTH_TENANT_ID = os.getenv("AZURE_AUTH_TENANT_ID", AZURE_TENANT_ID)
+
+    KB_FIELDS_CONTENT = os.getenv("KB_FIELDS_CONTENT", "content")
+    KB_FIELDS_SOURCEPAGE = os.getenv("KB_FIELDS_SOURCEPAGE", "sourcepage")
+
+    AZURE_SEARCH_QUERY_LANGUAGE = os.getenv("AZURE_SEARCH_QUERY_LANGUAGE", "en-us")
+    AZURE_SEARCH_QUERY_SPELLER = os.getenv("AZURE_SEARCH_QUERY_SPELLER", "lexicon")
+
+    USE_GPT4V = os.getenv("USE_GPT4V", "").lower() == "true"
+    
+    
+    # Check if a file was sent
+    files = await request.files
+    if 'file' not in files:
+        return 'No file part', 400
+    file = files['file']
+
+    # If the user does not select a file, the browser might
+    # submit an empty part without a filename.
+    if file.filename == '':
+        return 'No selected file', 400
+
+    # Save the file to the 'data' folder which is at the same level as 'app'
+    filename = secure_filename(file.filename)
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    base_dir = os.path.join(script_dir, '..', '..')  # Move up two levels to the parent directory of 'app'
+    data_dir = os.path.join(base_dir, 'data')  # Access the 'data' directory
+    file_path = os.path.join(data_dir, filename)
+    venv_python_path = os.path.join(base_dir, 'scripts', '.venv', 'bin', 'python3')
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    await file.save(file_path)
+
+    # Construct the path to the 'prepdocs.py' script which is also at the same level as 'app'
+    script_path = os.path.join(base_dir, 'scripts', 'prepdocs.py')
+    # Call the prepdocs script with the --uploaded_file argument
+    
+    subprocess_args = [venv_python_path, script_path, '--uploaded_file', file_path,
+                    '--formrecognizerservice', AZURE_FORMRECOGNIZER_SERVICE,
+                    '--storageaccount', AZURE_STORAGE_ACCOUNT,
+                    '--container', AZURE_STORAGE_CONTAINER,
+                    '--searchservice', AZURE_SEARCH_SERVICE,
+                    '--index', AZURE_SEARCH_INDEX,
+                    '--openaiservice', AZURE_OPENAI_SERVICE,
+                    '--openaideployment', AZURE_OPENAI_EMB_DEPLOYMENT]
+
+    if OPENAI_API_KEY:
+        subprocess_args.extend(['--openaimodelname', OPENAI_API_KEY,
+                                '--openaikey', OPENAI_API_KEY])
+
+    if OPENAI_ORGANIZATION:  
+        subprocess_args.extend(['--openaiorg', OPENAI_ORGANIZATION])  
+
+    subprocess.run(subprocess_args)
+    
+    return 'File uploaded and processed successfully'
 
 @bp.before_app_serving
 async def setup_clients():
@@ -414,31 +536,31 @@ async def evaluate_rubric():
         return error_response(error, "/evaluate_rubric")
 
 
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploaded_csv")
-@bp.route("/upload", methods=["POST"])
-async def upload_file():
-    logging.debug("Upload request received")  
-    logging.debug("Headers: %s", request.headers)  
-    logging.debug("Files: %s", request.files)  
-    AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT")
-    AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
+# UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploaded_csv")
+# @bp.route("/upload", methods=["POST"])
+# async def upload_file():
+#     logging.debug("Upload request received")  
+#     logging.debug("Headers: %s", request.headers)  
+#     logging.debug("Files: %s", request.files)  
+#     AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT")
+#     AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
 
-    file = await request.files.get("file")
-    if not file:
-        return jsonify({"error": "No file provided"}), 400
+#     file = await request.files.get("file")
+#     if not file:
+#         return jsonify({"error": "No file provided"}), 400
 
-    # Initialize BlobManager
-    blob_manager = BlobManager(
-        endpoint=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
-        container=AZURE_STORAGE_CONTAINER,
-        credential=CONFIG_CREDENTIAL,
-    )
+#     # Initialize BlobManager
+#     blob_manager = BlobManager(
+#         endpoint=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
+#         container=AZURE_STORAGE_CONTAINER,
+#         credential=CONFIG_CREDENTIAL,
+#     )
 
-    # Upload the file to the specified folder
-    file_content = file.read()  # Read the file content
-    await blob_manager.upload_blob(file_content, file.filename, folder=UPLOAD_FOLDER)
+#     # Upload the file to the specified folder
+#     file_content = file.read()  # Read the file content
+#     await blob_manager.upload_blob(file_content, file.filename, folder=UPLOAD_FOLDER)
 
-    return jsonify({"message": "File uploaded successfully"})
+#     return jsonify({"message": "File uploaded successfully"})
 
 @bp.after_app_serving
 async def close_clients():

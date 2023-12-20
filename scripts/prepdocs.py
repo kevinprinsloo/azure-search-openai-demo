@@ -108,7 +108,12 @@ async def setup_file_strategy(credential: AsyncTokenCredential, args: Any) -> Fi
 
     print("Processing files...")
     list_file_strategy: ListFileStrategy
-    if args.datalakestorageaccount:
+    
+    if args.uploaded_file:  
+        print(f"Using uploaded file {args.uploaded_file}")  
+        list_file_strategy = LocalListFileStrategy(path_pattern=args.uploaded_file, verbose=args.verbose)  
+    elif args.datalakestorageaccount:    
+    # if args.datalakestorageaccount:
         adls_gen2_creds = credential if is_key_empty(args.datalakekey) else args.datalakekey
         print(f"Using Data Lake Gen2 Storage Account {args.datalakestorageaccount}")
         list_file_strategy = ADLSGen2ListFileStrategy(
@@ -295,6 +300,7 @@ if __name__ == "__main__":
         required=False,
         help="Required if --searchimages is specified and visionKeyVaultName is provided. Fetch the Azure AI Vision key from this visionKeyVaultName in the key vault instead of the instead of the current user identity to login (use az login to set current user for Azure)",
     )
+    parser.add_argument("--uploaded_file", help="Path of the newly uploaded file")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     args = parser.parse_args()
 
