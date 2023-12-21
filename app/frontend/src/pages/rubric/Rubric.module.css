@@ -235,7 +235,7 @@ button {
 }
 
 .uploadButtonContainer .btn {
-    background-image: linear-gradient(to right, #007bff, #b3006e); /* Gradient effect */
+    background-image: linear-gradient(to right, #007bff, #0048b3); /* Gradient effect */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow effect */
     font-weight: 500; /* Increase font weight */
 }
