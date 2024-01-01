@@ -40,23 +40,19 @@ button {
 }
 
 .spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #ccc;
-    border-top-color: #333;
-    border-radius: 100%;
-    animation: spin 1s infinite linear;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 2s linear infinite;
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
+
 
 .rubric-chat-container {
     display: flex;
@@ -221,6 +217,13 @@ button {
     width: 8px;
 }
 
+.modal-body {  
+    background-color: #f5f5f5;  
+    border: 1px solid #ddd;  
+    padding: 20px;  
+    margin: 20px;  
+}  
+
 .spinner-container {
     display: flex;
     justify-content: center;
@@ -234,15 +237,16 @@ button {
     /* background: rgba(255, 255, 255, 0.5); Optional: Add a semi-transparent white background */
 }
 
-.uploadButtonContainer .btn {
-    background-image: linear-gradient(to right, #007bff, #0048b3); /* Gradient effect */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow effect */
-    font-weight: 500; /* Increase font weight */
-}
-
 .tableContainer {
     margin-top: 1rem;
 }
+
+.uploadButtonContainer {  
+    display: flex;  
+    justify-content: center;  
+    align-items: center;  
+    margin: 20px 0;  
+}  
 
 .uploadButtonContainer .uploadBtnWrapper {
     margin-bottom: 30px;
@@ -255,21 +259,23 @@ button {
     flex-direction: column;
 }
 
-.uploadButtonContainer .btn {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-    margin-bottom: 20px;
-}
-
-.uploadButtonContainer .btn:hover {
-    background-color: #6e0ead;
-}
+.uploadButtonContainer .btn {  
+    background-color: #007bff;  
+    color: white;  
+    padding: 15px 30px;  
+    margin: 0 10px;  
+    border: none;  
+    border-radius: 5px;  
+    cursor: pointer;  
+    font-size: 18px;  
+    font-weight: bold;  
+    transition: background-color 0.3s ease, transform 0.3s ease;  
+}  
+  
+.uploadButtonContainer .btn:hover {  
+    background-color: #0056b3;  
+    transform: scale(1.05);  
+}  
 
 .uploadButtonContainer .dragDropZone {
     border: 2px dashed #007bff;
@@ -318,6 +324,39 @@ button {
     transition: background-color 0.3s ease;
     margin-bottom: 20px;
 }
+
+.banner {
+    display: flex;
+    justify-content: flex-start; /* Align buttons to the left */
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 20px 0;
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,0.2);
+    margin-bottom: 20px; /* Add some space between the banner and the table */
+}
+
+.banner .btn {
+    background-color: #007bff;
+    color: white;
+    padding: 15px 30px;
+    margin-right: 10px; /* Add some space between the buttons */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.banner .btn:active {
+    transform: scale(0.95); /* Make the button slightly smaller when clicked */
+}
+
+.banner .btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.05); /* Make the button slightly larger when hovered over */
+}
+
 
 select {
     width: 80%;
@@ -420,22 +459,54 @@ select {
     z-index: 1; /* Ensure it's above other content but below dropdown */
 }
 
-.progress-bar-container {
-    width: 100%;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-}
+.progress-bar-container {  
+    width: 100%;  
+    height: 20px;  
+    background-color: #ddd;  
+    border-radius: 4px;  
+    margin-top: 20px;  
+}  
 
-.progress-bar {
-    height: 20px;
-    background-color: #007bff;
-    border-radius: 4px;
-    width: 0; /* Initial width should be 0 */
-    transition: width 0.4s ease;
-}
+.progress {  
+    height: 20px;  
+    background: #f5f5f5;  
+} 
+.progress-bar {  
+    height: 100%;  
+    background-color: #007bff;  
+    border-radius: 4px;  
+}  
 
 .runbutton {
     background-image: linear-gradient(to right, #007bff, #0056b3); /* Gradient effect */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Shadow effect */
     font-weight: 500; /* Increase font weight */
+}
+
+#drop_zone {
+    border: 2px dashed #bbb;
+    border-radius: 10px;
+    width: 300px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #bbb;
+    font-size: 20px;
+    transition: color 0.3s, border-color 0.3s;
+}
+
+#drop_zone:hover {
+    color: #666;
+    border-color: #666;
+}
+
+#click_upload {
+    color: blue;
+    cursor: pointer;
+}
+
+#click_upload:hover {
+    text-decoration: underline;
 }

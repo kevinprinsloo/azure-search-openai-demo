@@ -7,7 +7,6 @@ import { AnalysisPanel, AnalysisPanelTabs } from "../../components/AnalysisPanel
 import styles from "./Rubric.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Spinner from "react-bootstrap/Spinner";
-// import { uploadFile } from "./uploadFile";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 
@@ -24,12 +23,7 @@ const RubricEvaluation = () => {
 
     const [rubricCriteria, setRubricCriteria] = useState<string[]>([
         "Is our liability limited, if so what is the amount of the liability cap?"
-        // "What losses are included and excluded from our liability? (e.g. confidentiality, data breaches)",
-        // "Is the supplier’s liability limited, if so what is the amount of the cap?"
-        // "What losses are included or excluded from the supplier’s liability?",
-        // "Does the supplier provide an indemnity and if so what does this cover and what losses are included and excluded?",
-        // "Do we provide an indemnity and if so what does this cover and what losses are included and excluded?",
-        // "Is there a confidentiality clause in the agreement that protects our confidential information from disclosure?"
+        //"What losses are included and excluded from our liability? (e.g. confidentiality, data breaches)",
     ]);
     const [responses, setResponses] = useState<ResponseItem[]>([]);
     const [activeCitation, setActiveCitation] = useState<string>();
@@ -153,35 +147,14 @@ const RubricEvaluation = () => {
     };
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
 
-    // const handleFileUpload = async (fileList: FileList | null) => {
-    //     if (fileList && fileList.length > 0) {
-    //         setIsUploading(true);
-    //         const file = fileList[0];
-    //         setUploadedFileName(file.name);
-
-    //         // Create a FormData object and append the file
-    //         const formData = new FormData();
-    //         formData.append("file", file);
-
-    //         // Send a POST request to the backend
-    //         const response = await fetch("/upload", {
-    //             method: "POST",
-    //             body: formData
-    //         });
-
-    //         if (!response.ok) {
-    //             console.error("File upload failed");
-    //         }
-
-    //         setIsUploading(false);
-    //     }
-    // };
     const handleFileUpload = (fileList: FileList | null) => {
         if (fileList && fileList.length > 0) {
             setIsUploading(true);
             const file = fileList[0];
             setUploadedFileName(file.name);
+            setUploadedFiles(prevState => [...prevState, file.name]);
 
             // Create a FormData object and append the file
             const formData = new FormData();
@@ -215,9 +188,10 @@ const RubricEvaluation = () => {
             // Send the FormData
             xhr.send(formData);
         }
+        setUploadedFiles(prevState => [...prevState, File.name]); // Add the file name to the list of uploaded files
     };
-    const [uploadProgress, setUploadProgress] = useState(0);
 
+    const [uploadProgress, setUploadProgress] = useState(0);
     const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
         event.preventDefault();
     };
@@ -274,12 +248,15 @@ const RubricEvaluation = () => {
                 </div>
             ) : null}
             <div className={styles.uploadButtonContainer}>
-                <button type="button" className={styles.btn} onClick={handleShow}>
-                    Upload PDF
-                </button>
-                <button type="button" className={styles.btn} onClick={() => setRunAnalysis(true)}>
-                    Run Analysis
-                </button>
+                <div className="banner">
+                    <button type="button" className="btn" onClick={handleShow}>
+                        Upload PDF
+                    </button>
+                    <button type="button" className="btn" onClick={() => setRunAnalysis(true)}>
+                        Run Analysis
+                    </button>
+                    {/* Add more buttons here in the future */}
+                </div>
             </div>
             <Modal show={showModal} onHide={handleClose}>
                 <Modal.Header closeButton>
@@ -287,26 +264,47 @@ const RubricEvaluation = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={event => handleFileUpload(event.target.files)} />
-                    <div className="dragDropZone" onDragOver={onDragOver} onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
+                    <div id="drop_zone" onDragOver={onDragOver} onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
                         {isUploading ? (
                             <>
                                 <p>Uploading {uploadedFileName}...</p>
                                 <div className="progress-bar-container">
-                                    <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
+                                    <div className="progress">
+                                        <div
+                                            className="progress-bar"
+                                            role="progressbar"
+                                            style={{ width: `${uploadProgress}%` }}
+                                            aria-valuenow={uploadProgress}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                        >
+                                            {uploadProgress}%
+                                        </div>
+                                    </div>
                                 </div>
                             </>
                         ) : (
-                            <p>Drop files here to upload or click to select a file</p>
+                            <p>
+                                Drop files here or <span id="click_upload">click to upload</span>
+                            </p>
                         )}
                     </div>
+                    <ul>
+                        {uploadedFiles.map((file, index) => (
+                            <li key={index}>{file}</li>
+                        ))}
+                    </ul>
                 </Modal.Body>
 
                 <Modal.Footer>
                     {isUploading && (
                         <button type="button" className={styles.uploadInProgressButton} disabled>
-                            Uploading...
+                            Intelligent Document Processing...
                             <>
-                                <p>Uploading {uploadedFileName}...</p>
+                                <p>Processing {uploadedFileName}...</p>
+                                <Spinner animation="border" role="status">
+                                    <span className="sr-only">Processing...</span>
+                                </Spinner>
                                 <div className="progress-bar-container">
                                     <div className="progress-bar" style={{ width: `${uploadProgress}%` }}></div>
                                 </div>
