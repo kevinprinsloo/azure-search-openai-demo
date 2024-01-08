@@ -9,8 +9,9 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Spinner from "react-bootstrap/Spinner";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
-
 import Select from "react-select";
+
+import Papa from "papaparse";
 
 interface ResponseItem {
     criterion: string;
@@ -22,9 +23,10 @@ const RubricEvaluation = () => {
     const [runAnalysis, setRunAnalysis] = useState(false);
 
     const [rubricCriteria, setRubricCriteria] = useState<string[]>([
-        "Is our liability limited, if so what is the amount of the liability cap?"
-        //"What losses are included and excluded from our liability? (e.g. confidentiality, data breaches)",
+        "Is our liability limited, if so what is the amount of the liability cap?",
+        "What losses are included and excluded from our liability? (e.g. confidentiality, data breaches)"
     ]);
+
     const [responses, setResponses] = useState<ResponseItem[]>([]);
     const [activeCitation, setActiveCitation] = useState<string>();
     const [activeAnalysisPanelTab, setActiveAnalysisPanelTab] = useState<AnalysisPanelTabs | undefined>(undefined);
@@ -106,6 +108,50 @@ const RubricEvaluation = () => {
         }
     };
 
+    useEffect(() => {
+        // Make a request to the backend to get the SAS URL of the default CSV file
+        fetch("/get_default_csv_sas_url")
+            .then(response => response.text())
+            .then(csvSasUrl => {
+                // Fetch the CSV file and parse it
+                fetch(csvSasUrl)
+                    .then(response => response.text())
+                    .then(csv => {
+                        Papa.parse(csv, {
+                            complete: function (results) {
+                                console.log("CSV parsed successfully", results.data);
+                                const criteria = results.data
+                                    .slice(1) // Skip the first row
+                                    .filter((row: any) => row[0]) // Filter out empty rows
+                                    .map((row: any) => row[0]); // Extract the first (and only) element from each row array
+                                setRubricCriteria(criteria);
+                            }
+                        });
+                    });
+            });
+    }, []);
+
+    useEffect(() => {
+        // Fetch the list of existing rubric files
+        fetch("/get_rubric_files")
+            .then(response => response.json())
+            .then(data => {
+                const rubricFiles = data.rubric_files.map((fileName: string) => ({
+                    fileName: fileName,
+                    fileUrl: `/get_default_csv_sas_url?file=${fileName}` // Change this URL to the endpoint that returns the SAS URL of a specific file
+                }));
+    
+                // Add the default CSV file
+                const defaultFile = {
+                    fileName: 'rubric.csv',  // replace with your default filename
+                    fileUrl: '/get_default_csv_sas_url'  // replace with the endpoint that returns the SAS URL of the default file
+                };
+                rubricFiles.unshift(defaultFile);
+    
+                setUploadedFiles(rubricFiles);
+            });
+    }, []);
+
     // Function to process all rubric questions at once
     const processAllQuestions = async () => {
         try {
@@ -147,14 +193,13 @@ const RubricEvaluation = () => {
     };
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+    const [uploadedFiles, setUploadedFiles] = useState<{ fileName: string; fileUrl: string }[]>([]);
 
     const handleFileUpload = (fileList: FileList | null) => {
         if (fileList && fileList.length > 0) {
             setIsUploading(true);
             const file = fileList[0];
             setUploadedFileName(file.name);
-            setUploadedFiles(prevState => [...prevState, file.name]);
 
             // Create a FormData object and append the file
             const formData = new FormData();
@@ -174,10 +219,15 @@ const RubricEvaluation = () => {
                 }
             };
 
-            // Set up a listener for when the request finishes
+            // When a file is uploaded, add an object containing the file name and the SAS URL to uploadedFiles
             xhr.onloadend = () => {
                 if (xhr.status === 200) {
                     console.log("File upload successful");
+
+                    // The backend should return the SAS URL of the uploaded CSV file
+                    const csvSasUrl = xhr.responseText;
+
+                    setUploadedFiles(prevState => [...prevState, { fileName: file.name, fileUrl: csvSasUrl }]);
                 } else {
                     console.error("File upload failed");
                 }
@@ -187,9 +237,89 @@ const RubricEvaluation = () => {
 
             // Send the FormData
             xhr.send(formData);
+
+            const [uploadedFiles, setUploadedFiles] = useState<{ fileName: string; fileUrl: string }[]>([]);
+
+            // ...
+
+            const csvSasUrl = xhr.responseText; // Declare the csvSasUrl variable
+            setUploadedFiles(prevState => [...prevState, { fileName: file.name, fileUrl: csvSasUrl }]);
         }
-        setUploadedFiles(prevState => [...prevState, File.name]); // Add the file name to the list of uploaded files
     };
+
+    const clearResponses = () => {
+        setResponses([]);
+        setRunAnalysis(false);
+    };
+
+    const handleFileUpload_csv = (fileList: FileList | null) => {
+        if (fileList && fileList.length > 0) {
+            const file = fileList[0];
+            const filename = file.name;
+
+            // Create a FormData object and append the file
+            const formData = new FormData();
+            formData.append("file", file);
+
+            // Create a new XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+
+            // Set up the request
+            xhr.open("POST", "/upload_rubric", true); // Change the endpoint to '/upload_rubric'
+
+            // Set up a listener for when the request finishes
+            xhr.onloadend = () => {
+                if (xhr.status === 200) {
+                    console.log("File upload successful");
+
+                    // The backend should return the SAS URL of the uploaded CSV file
+                    const csvSasUrl = xhr.responseText;
+
+                    setUploadedFiles(prevState => [...prevState, { fileName: file.name, fileUrl: csvSasUrl }]);
+
+                    // Fetch the CSV file and parse it
+                    fetch(csvSasUrl)
+                        .then(response => {
+                            console.log("Fetch response status:", response.status);
+                            return response.text();
+                        })
+                        .then(csv => {
+                            console.log("CSV content:", csv);
+                            Papa.parse(csv, {
+                                complete: function (results) {
+                                    console.log("CSV parsed successfully", results.data);
+                                    const criteria = results.data
+                                        .slice(1) // Skip the first row
+                                        .filter((row: any) => row[0]) // Filter out empty rows
+                                        .map((row: any) => row[0]); // Extract the first (and only) element from each row array
+                                    setRubricCriteria(criteria);
+                                }
+                            });
+                        });
+                } else {
+                    console.error("File upload failed");
+                }
+            };
+
+            // Send the FormData
+            xhr.send(formData);
+        }
+    };
+
+    const handleFileSelection = (selectedFileUrl: string) => {
+        // Fetch the selected CSV file and parse it
+        fetch(selectedFileUrl)
+            .then(response => response.text())
+            .then(csv => {
+                Papa.parse(csv, {
+                    complete: function (results) {
+                        const criteria = results.data.filter((row: any) => row[0]).map((row: any) => row[0]);
+                        setRubricCriteria(criteria);
+                    }
+                });
+            });
+    };
+        
 
     const [uploadProgress, setUploadProgress] = useState(0);
     const onDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -202,7 +332,10 @@ const RubricEvaluation = () => {
     };
 
     const [showModal, setShowModal] = useState(false);
-    const handleClose = () => setShowModal(false);
+    const handleClose = () => {
+        setShowModal(false);
+        setUploadedFiles([]); // Clear the list of uploaded files
+    };
     const handleShow = () => setShowModal(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedFileName, setUploadedFileName] = useState("");
@@ -247,15 +380,36 @@ const RubricEvaluation = () => {
                     </Spinner>
                 </div>
             ) : null}
+            // Dropdown menu to select a file 
+            <select onChange={e => handleFileSelection(e.target.value)}>
+                {uploadedFiles.map((file, index) => (
+                    <option key={index} value={file.fileUrl}>
+                        {file.fileName}
+                    </option>
+                ))}
+            </select>
             <div className={styles.uploadButtonContainer}>
-                <div className="banner">
-                    <button type="button" className="btn" onClick={handleShow}>
+                <div className={styles.banner}>
+                    <button type="button" className={styles.btn} onClick={handleShow}>
                         Upload PDF
                     </button>
-                    <button type="button" className="btn" onClick={() => setRunAnalysis(true)}>
+                    <button type="button" className={styles.btn} onClick={() => setRunAnalysis(true)}>
                         Run Analysis
                     </button>
-                    {/* Add more buttons here in the future */}
+                    <button type="button" className={styles.btn} onClick={() => fileInputRef.current?.click()}>
+                        Upload Rubric
+                    </button>
+                    <button type="button" className={styles.btn} onClick={clearResponses}>
+                        Clear Results
+                    </button>
+
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv"
+                        style={{ display: "none" }}
+                        onChange={event => handleFileUpload_csv(event.target.files)}
+                    />
                 </div>
             </div>
             <Modal show={showModal} onHide={handleClose}>
@@ -264,34 +418,36 @@ const RubricEvaluation = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={event => handleFileUpload(event.target.files)} />
-                    <div id="drop_zone" onDragOver={onDragOver} onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
+                    <div id={styles.drop_zone} onDragOver={onDragOver} onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
                         {isUploading ? (
-                            <>
-                                <p>Uploading {uploadedFileName}...</p>
-                                <div className="progress-bar-container">
-                                    <div className="progress">
-                                        <div
-                                            className="progress-bar"
-                                            role="progressbar"
-                                            style={{ width: `${uploadProgress}%` }}
-                                            aria-valuenow={uploadProgress}
-                                            aria-valuemin={0}
-                                            aria-valuemax={100}
-                                        >
-                                            {uploadProgress}%
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
+                            <p>Uploading {uploadedFileName}...</p>
                         ) : (
-                            <p>
-                                Drop files here or <span id="click_upload">click to upload</span>
-                            </p>
+                            <div id={styles.drop_zone_inner}>
+                                <p>
+                                    Drop files here or <span id={styles.click_upload}>click to upload</span>
+                                </p>
+                            </div>
                         )}
                     </div>
+                    {isUploading && (
+                        <div className={styles.progress_bar_container}>
+                            <div className={styles.progress}>
+                                <div
+                                    className={styles.progress_bar}
+                                    role="progressbar"
+                                    style={{ width: `${uploadProgress}%` }}
+                                    aria-valuenow={uploadProgress}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                >
+                                    {uploadProgress}%
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <ul>
                         {uploadedFiles.map((file, index) => (
-                            <li key={index}>{file}</li>
+                            <li key={index}>{file.fileName}</li>
                         ))}
                     </ul>
                 </Modal.Body>
