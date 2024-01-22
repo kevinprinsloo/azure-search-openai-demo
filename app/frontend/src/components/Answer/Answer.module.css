@@ -47,14 +47,17 @@
     text-align: center;
     border-radius: 4px;
     padding: 0px 8px;
-    background: #d1dbfa;
-    color: #123bb6;
+    background: #99cdd6;
+    color: #223563;
     text-decoration: none;
     cursor: pointer;
 }
 
 .citation:hover {
     text-decoration: underline;
+    background-color: #257988;
+    transform: scale(1.05); /* Make the button slightly larger when hovered over */
+    color: #dce6ec;
 }
 
 .followupQuestionsList {
@@ -94,7 +97,7 @@ sup {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 16px;
     font-weight: 600;
     vertical-align: top;
     top: -1;
@@ -103,7 +106,7 @@ sup {
     height: 14px;
     border-radius: 3px;
     background: #d1dbfa;
-    color: #123bb6;
+    color: #197484;
     text-decoration-color: transparent;
     outline: transparent solid 1px;
     cursor: pointer;

@@ -68,12 +68,14 @@ export const Answer = ({
             {!!parsedAnswer.citations.length && (
                 <Stack.Item>
                     <Stack horizontal wrap tokens={{ childrenGap: 5 }}>
-                        <span className={styles.citationLearnMore}>Citations:</span>
+                        <span className={styles.citationLearnMore}>Citations (Document, Pages):</span>
                         {parsedAnswer.citations.map((x, i) => {
                             const path = getCitationFilePath(x);
+                            // Remove the '#' character by replacing it with an empty string
+                            const formattedCitation = x.replace(/#/g, " - ").replace(/page=/g, 'Page = ');
                             return (
                                 <a key={i} className={styles.citation} title={x} onClick={() => onCitationClicked(path)}>
-                                    {`${++i}. ${x}`}
+                                    {`${++i}. ${formattedCitation}`}
                                 </a>
                             );
                         })}

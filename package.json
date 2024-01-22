@@ -1,6 +1,9 @@
 {
   "dependencies": {
     "@azure/storage-blob": "^12.17.0",
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
+    "@fortawesome/react-fontawesome": "^0.2.0",
     "@types/papaparse": "^5.3.14",
     "@types/react-select": "^5.0.1",
     "axios": "^1.6.2",

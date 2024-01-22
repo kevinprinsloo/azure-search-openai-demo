@@ -7,6 +7,8 @@ import { useLogin } from "../../authConfig";
 
 import { LoginButton } from "../../components/LoginButton";
 
+import logo from "../../assets/MyLogo.png";
+
 const Layout = () => {
     const [showUploadModal, setShowUploadModal] = useState(false);
 
@@ -16,42 +18,20 @@ const Layout = () => {
         setSelectedFile(file);
     };
 
-    const handleUploadClick = async () => {
-        if (selectedFile) {
-            try {
-                const formData = new FormData();
-                formData.append("file", selectedFile);
-
-                const response = await fetch("http://localhost:3000/upload", {
-                    method: "POST",
-                    body: formData
-                });
-
-                if (response.ok) {
-                    console.log("File uploaded successfully");
-                    setShowUploadModal(false);
-                } else {
-                    console.error("Error uploading file");
-                }
-            } catch (error) {
-                console.error("Error uploading file:", error);
-            }
-        }
-    };
-
     return (
         <div className={styles.layout}>
             <header className={styles.header} role={"banner"}>
                 <div className={styles.headerTop}>
                     <div className={styles.headerContainer}>
-                        <Link to="/" className={styles.headerTitleContainer}>
-                            <h3 className={styles.headerTitle}>AI on Enterprise data </h3>
-                        </Link>
+                        <div className={styles.logoContainer}>
+                            <img src={logo} alt="Logo" className={styles.logo} />
+                            <h1 className={styles.title}>Intelligent Document Interrogation</h1>
+                        </div>
                         <nav>
                             <ul className={styles.headerNavList}>
                                 <li>
                                     <NavLink to="/" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                        Chat
+                                        Home
                                     </NavLink>
                                 </li>
                                 <li className={styles.headerNavLeftMargin}>
@@ -59,9 +39,14 @@ const Layout = () => {
                                         Ask a question
                                     </NavLink>
                                 </li>
+                                <li className={styles.headerNavLeftMargin}>
+                                    <NavLink to="/rubric" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
+                                        Critria Evaluaction
+                                    </NavLink>
+                                </li>
                             </ul>
                         </nav>
-                        <h4 className={styles.headerRightText}>Data Secured - Azure Cloud Platform</h4>
+                        <h4 className={styles.headerRightText}>Login </h4>
                         {useLogin && <LoginButton />}
                     </div>
                 </div>

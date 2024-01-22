@@ -1,0 +1,14 @@
+.logo {
+    max-width: 300px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+    display: block;
+    margin: 0 auto 20px;
+}
+
+.TitleLogo {
+    color: #333; /* Adjust color as per your design */
+    text-align: center;
+    flex-direction: column;
+    margin-bottom: 30px;
+    font-size: 26px;
+}

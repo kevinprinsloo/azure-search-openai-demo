@@ -65,27 +65,27 @@ Error type: {error_type}
 """
 ERROR_MESSAGE_FILTER = """Your message contains content that was flagged by the OpenAI content filter."""
 
-# Set up Azure Blob Storage client
-connection_string = "DefaultEndpointsProtocol=https;AccountName=stg5jr27gzkxvwq;AccountKey=PNjmVDbH3q/65xnVGCZwig0tMFhlh7nln6C9XUXqpCAALY+A4lGJ4S4OxD+3MUpvcZRSvzyrdNk3+ASt459qjg==;EndpointSuffix=core.windows.net"  # replace with your Blob Storage connection string
-container_name = "stg5jr27gzkxvwq"  # replace with your Blob Storage container name
-blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-CONFIG_BLOB_CONTAINER_CLIENT = blob_service_client.get_container_client(container_name)
+# # Set up Azure Blob Storage client
+# connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING") #"DefaultEndpointsProtocol=https;AccountName=stljdljgw3xjfgq;AccountKey=PNjmVDbH3q/65xnVGCZwig0tMFhlh7nln6C9XUXqpCAALY+A4lGJ4S4OxD+3MUpvcZRSvzyrdNk3+ASt459qjg==;EndpointSuffix=core.windows.net"  # replace with your Blob Storage connection string
+# container_name = os.getenv("AZURE_STORAGE_ACCOUNT")#"stljdljgw3xjfgq"  # replace with your Blob Storage container name
+# blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+# CONFIG_BLOB_CONTAINER_CLIENT = blob_service_client.get_container_client(container_name)
 
-blob_name = "rubric"  # replace with your blob name
+# blob_name = "rubric"  # replace with your blob name
 
-blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-blob_client = blob_service_client.get_blob_client(container_name, blob_name)
+# blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+# blob_client = blob_service_client.get_blob_client(container_name, blob_name)
 
-sas_token = generate_blob_sas(
-    blob_service_client.account_name,
-    container_name,
-    blob_name,
-    account_key=blob_service_client.credential.account_key,
-    permission=BlobSasPermissions(read=True),
-    expiry=datetime.utcnow() + timedelta(hours=1)  # the token will be valid for 1 hour
-)
+# sas_token = generate_blob_sas(
+#     blob_service_client.account_name,
+#     container_name,
+#     blob_name,
+#     account_key=blob_service_client.credential.account_key,
+#     permission=BlobSasPermissions(read=True),
+#     expiry=datetime.utcnow() + timedelta(hours=1)  # the token will be valid for 1 hour
+# )
 
-sas_url = blob_client.url + "?" + sas_token
+# sas_url = blob_client.url + "?" + sas_token
 
 bp = Blueprint("routes", __name__, static_folder="static")
 # Fix Windows registry issue with mimetypes
@@ -240,46 +240,16 @@ def config():
 @bp.route('/upload', methods=['POST'])
 async def upload_file():
     
-    AZURE_FORMRECOGNIZER_RESOURCE_GROUP=os.environ["AZURE_FORMRECOGNIZER_RESOURCE_GROUP"]
     AZURE_FORMRECOGNIZER_SERVICE=os.environ["AZURE_FORMRECOGNIZER_SERVICE"]
-    AZURE_KEY_VAULT_NAME=""
     AZURE_STORAGE_ACCOUNT = os.environ["AZURE_STORAGE_ACCOUNT"]
     AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
     AZURE_SEARCH_SERVICE = os.environ["AZURE_SEARCH_SERVICE"]
     AZURE_SEARCH_INDEX = os.environ["AZURE_SEARCH_INDEX"]
-    VISION_SECRET_NAME = os.getenv("VISION_SECRET_NAME")
-    AZURE_KEY_VAULT_NAME = os.getenv("AZURE_KEY_VAULT_NAME")
-    # Shared by all OpenAI deployments
     OPENAI_HOST = os.getenv("OPENAI_HOST", "azure")
-    OPENAI_CHATGPT_MODEL = os.environ["AZURE_OPENAI_CHATGPT_MODEL"]
-    OPENAI_EMB_MODEL = os.getenv("AZURE_OPENAI_EMB_MODEL_NAME", "text-embedding-ada-002")
-    # Used with Azure OpenAI deployments
     AZURE_OPENAI_SERVICE = os.getenv("AZURE_OPENAI_SERVICE")
-    AZURE_OPENAI_GPT4V_DEPLOYMENT = os.environ.get("AZURE_OPENAI_GPT4V_DEPLOYMENT")
-    AZURE_OPENAI_GPT4V_MODEL = os.environ.get("AZURE_OPENAI_GPT4V_MODEL")
-    AZURE_OPENAI_CHATGPT_DEPLOYMENT = os.getenv("AZURE_OPENAI_CHATGPT_DEPLOYMENT") if OPENAI_HOST == "azure" else None
     AZURE_OPENAI_EMB_DEPLOYMENT = os.getenv("AZURE_OPENAI_EMB_DEPLOYMENT") if OPENAI_HOST == "azure" else None
-    AZURE_VISION_ENDPOINT = os.getenv("AZURE_VISION_ENDPOINT", "")
-    # Used only with non-Azure OpenAI deployments
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_ORGANIZATION = os.getenv("OPENAI_ORGANIZATION")
-
-    AZURE_TENANT_ID = os.getenv("AZURE_TENANT_ID")
-    AZURE_USE_AUTHENTICATION = os.getenv("AZURE_USE_AUTHENTICATION", "").lower() == "true"
-    AZURE_ENFORCE_ACCESS_CONTROL = os.getenv("AZURE_ENFORCE_ACCESS_CONTROL", "").lower() == "true"
-    AZURE_SERVER_APP_ID = os.getenv("AZURE_SERVER_APP_ID")
-    AZURE_SERVER_APP_SECRET = os.getenv("AZURE_SERVER_APP_SECRET")
-    AZURE_CLIENT_APP_ID = os.getenv("AZURE_CLIENT_APP_ID")
-    AZURE_AUTH_TENANT_ID = os.getenv("AZURE_AUTH_TENANT_ID", AZURE_TENANT_ID)
-
-    KB_FIELDS_CONTENT = os.getenv("KB_FIELDS_CONTENT", "content")
-    KB_FIELDS_SOURCEPAGE = os.getenv("KB_FIELDS_SOURCEPAGE", "sourcepage")
-
-    AZURE_SEARCH_QUERY_LANGUAGE = os.getenv("AZURE_SEARCH_QUERY_LANGUAGE", "en-us")
-    AZURE_SEARCH_QUERY_SPELLER = os.getenv("AZURE_SEARCH_QUERY_SPELLER", "lexicon")
-
-    USE_GPT4V = os.getenv("USE_GPT4V", "").lower() == "true"
-    
     
     # Check if a file was sent
     files = await request.files
@@ -330,9 +300,9 @@ async def upload_file():
 async def upload_rubric():
     
     # Set up Azure Blob Storage client
-    connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    connection_string = os.environ["AZURE_STORAGE_CONNECTION_STRING"]
     blob_service_client = BlobServiceClient.from_connection_string(connection_string) 
-    container_name = "rubric"  
+    container_name = os.getenv("AZURE_STORAGE_CONTAINER_RUBRIC")
     try:  
         await blob_service_client.create_container(container_name)  
     except ResourceExistsError:  
@@ -342,7 +312,7 @@ async def upload_rubric():
     files = await request.files
     if 'file' not in files:
         # If no file is uploaded, return the SAS URL of the default CSV file
-        blob_name = "rubric.csv"
+        blob_file_name = "rubric.csv"
     else:
         file = files['file']
 
@@ -352,10 +322,10 @@ async def upload_rubric():
         filename = secure_filename(file.filename)
 
         # Define the path in the blob storage where the file will be saved.
-        blob_name = f'{filename}'
+        blob_file_name = f'{filename}'
 
         # Save the file to the 'rubric' folder in Azure Blob Storage  
-        blob_client = CONFIG_BLOB_CONTAINER_CLIENT.get_blob_client(blob_name)  
+        blob_client = CONFIG_BLOB_CONTAINER_CLIENT.get_blob_client(blob_file_name)  
 
         # Read the file data and upload it to the blob
         file_data = file.read()
@@ -365,7 +335,7 @@ async def upload_rubric():
     sas_token = generate_blob_sas(
         blob_service_client.account_name,
         container_name,
-        blob_name,
+        blob_name= filename,
         account_key=blob_service_client.credential.account_key,
         permission=BlobSasPermissions(read=True),
         expiry=datetime.utcnow() + timedelta(hours=1)  # the token will be valid for 1 hour
@@ -375,24 +345,25 @@ async def upload_rubric():
 
     return sas_url  # Return the SAS URL of the uploaded file or the default CSV file
 
-@bp.route('/get_default_csv_sas_url')
-async def get_default_csv_sas_url():
+@bp.route('/get_csv_sas_url')
+async def get_csv_sas_url():
+    
     # Set up Azure Blob Storage client
     connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-    container_name = "rubric"
+    container_name = os.environ["AZURE_STORAGE_CONTAINER_RUBRIC"] #"rubric"
 
-    # Define the name of the default CSV file in the blob storage
-    blob_name = "rubric.csv"
+    # Get the name of the file from the query parameters
+    blob_file_name = request.args.get('file', 'rubric.csv')  # Use 'rubric.csv' as the default file name
 
-    # Get the blob client for the default CSV file
-    blob_client = blob_service_client.get_blob_client(container_name, blob_name)
+    # Get the blob client for the specified file
+    blob_client = blob_service_client.get_blob_client(container_name, blob_file_name)
 
     # Generate SAS token
     sas_token = generate_blob_sas(
         blob_service_client.account_name,
         container_name,
-        blob_name,
+        blob_file_name,
         account_key=blob_service_client.credential.account_key,
         permission=BlobSasPermissions(read=True),
         expiry=datetime.utcnow() + timedelta(hours=1)  # the token will be valid for 1 hour
@@ -400,13 +371,15 @@ async def get_default_csv_sas_url():
 
     sas_url = blob_client.url + "?" + sas_token
 
-    return sas_url  # Return the SAS URL of the default CSV file
+    return sas_url  # Return the SAS URL of the specified file
+
 
 @bp.route('/get_rubric_files')  
-async def get_rubric_files():  
+async def get_rubric_files(): 
+    
     connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")  
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)  
-    container_name = "rubric"  
+    container_name = os.getenv("AZURE_STORAGE_CONTAINER_RUBRIC")
     container_client = blob_service_client.get_container_client(container_name)  
   
     try:  
@@ -631,32 +604,6 @@ async def evaluate_rubric():
     except Exception as error:
         return error_response(error, "/evaluate_rubric")
 
-
-# UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploaded_csv")
-# @bp.route("/upload", methods=["POST"])
-# async def upload_file():
-#     logging.debug("Upload request received")  
-#     logging.debug("Headers: %s", request.headers)  
-#     logging.debug("Files: %s", request.files)  
-#     AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT")
-#     AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
-
-#     file = await request.files.get("file")
-#     if not file:
-#         return jsonify({"error": "No file provided"}), 400
-
-#     # Initialize BlobManager
-#     blob_manager = BlobManager(
-#         endpoint=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
-#         container=AZURE_STORAGE_CONTAINER,
-#         credential=CONFIG_CREDENTIAL,
-#     )
-
-#     # Upload the file to the specified folder
-#     file_content = file.read()  # Read the file content
-#     await blob_manager.upload_blob(file_content, file.filename, folder=UPLOAD_FOLDER)
-
-#     return jsonify({"message": "File uploaded successfully"})
 
 @bp.after_app_serving
 async def close_clients():

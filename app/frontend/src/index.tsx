@@ -56,7 +56,7 @@ const router = createHashRouter([
                 element: <Chat />
             },
             {
-                path: "rubic",
+                path: "rubric",
                 element: <Rubric />
             },
             {
