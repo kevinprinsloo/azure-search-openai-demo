@@ -41,7 +41,7 @@ const Layout = () => {
                                 </li>
                                 <li className={styles.headerNavLeftMargin}>
                                     <NavLink to="/rubric" className={({ isActive }) => (isActive ? styles.headerNavPageLinkActive : styles.headerNavPageLink)}>
-                                        Critria Evaluaction
+                                        Critria Evaluation
                                     </NavLink>
                                 </li>
                             </ul>
