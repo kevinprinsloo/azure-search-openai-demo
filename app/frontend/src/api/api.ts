@@ -70,3 +70,46 @@ export async function evaluateRubric(rubricCriteria: any[], messages: any[]) {
 
     return await response.json();
 }
+
+export async function uploadFile(file: File, idToken: string | undefined): Promise<string> {  
+    const formData = new FormData();  
+    formData.append('file', file);  
+  
+    const response = await fetch(`${BACKEND_URI}/upload_rubric`, {  
+        method: "POST",  
+        headers: getHeaders(idToken),  
+        body: formData  
+    });  
+  
+    if (!response.ok) {  
+        throw new Error(`Error: ${response.statusText}`);  
+    }  
+  
+    return await response.text();  // Assuming the response is a text string (SAS URL)  
+}  
+  
+export async function getRubricFiles(idToken: string | undefined): Promise<any> {  
+    const response = await fetch(`${BACKEND_URI}/get_rubric_files`, {  
+        method: "GET",  
+        headers: getHeaders(idToken)  
+    });  
+  
+    if (!response.ok) {  
+        throw new Error(`Error: ${response.statusText}`);  
+    }  
+  
+    return await response.json();  // Assuming the response is a JSON object  
+}  
+  
+export async function getCsvSasUrl(file: string, idToken: string | undefined): Promise<string> {  
+    const response = await fetch(`${BACKEND_URI}/get_csv_sas_url?file=${encodeURIComponent(file)}`, {  
+        method: "GET",  
+        headers: getHeaders(idToken)  
+    });  
+  
+    if (!response.ok) {  
+        throw new Error(`Error: ${response.statusText}`);  
+    }  
+  
+    return await response.text();  // Assuming the response is a text string (SAS URL)  
+}  

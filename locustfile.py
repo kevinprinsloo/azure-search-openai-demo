@@ -18,10 +18,10 @@ class ChatUser(HttpUser):
                     {
                         "content": random.choice(
                             [
-                                "What is included in my Northwind Health Plus plan that is not in standard?",
-                                "What does a Product Manager do?",
-                                "What happens in a performance review?",
-                                "Whats your whistleblower policy?",
+                                "Do we have the right to assign this agreement to a third party?",
+                                "What termination rights do we have?",
+                                "Do we have the right to conduct a data audit of the supplier?",
+                                "What losses are included or excluded from the supplier’s liability? ",
                             ]
                         ),
                         "role": "user",
@@ -32,7 +32,7 @@ class ChatUser(HttpUser):
                         "retrieval_mode": "hybrid",
                         "semantic_ranker": True,
                         "semantic_captions": False,
-                        "top": 3,
+                        "top": 6,
                         "suggest_followup_questions": False,
                     },
                 },
@@ -43,19 +43,19 @@ class ChatUser(HttpUser):
             "/chat",
             json={
                 "messages": [
-                    {"content": "What happens in a performance review?", "role": "user"},
+                    {"content": "Do we have the right to assign this agreement to a third party?", "role": "user"},
                     {
-                        "content": "During a performance review, employees will receive feedback on their performance over the past year, including both successes and areas for improvement. The feedback will be provided by the employee's supervisor and is intended to help the employee develop and grow in their role [employee_handbook-3.pdf]. The review is a two-way dialogue between the employee and their manager, so employees are encouraged to be honest and open during the process [employee_handbook-3.pdf]. The employee will also have the opportunity to discuss their goals and objectives for the upcoming year [employee_handbook-3.pdf]. A written summary of the performance review will be provided to the employee, which will include a rating of their performance, feedback, and goals and objectives for the upcoming year [employee_handbook-3.pdf].",
+                        "content": "What termination rights do we have?",
                         "role": "assistant",
                     },
-                    {"content": "Does my plan cover eye exams?", "role": "user"},
+                    {"content": "Do we have the right to conduct a data audit of the supplier?", "role": "user"},
                 ],
                 "context": {
                     "overrides": {
                         "retrieval_mode": "hybrid",
                         "semantic_ranker": True,
                         "semantic_captions": False,
-                        "top": 3,
+                        "top": 6,
                         "suggest_followup_questions": False,
                     },
                 },

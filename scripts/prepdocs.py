@@ -2,6 +2,8 @@ import argparse
 import asyncio
 from typing import Any, Optional, Union
 
+from azure.storage.blob import BlobClient  
+
 from azure.core.credentials import AzureKeyCredential
 from azure.core.credentials_async import AsyncTokenCredential
 from azure.identity.aio import AzureDeveloperCliCredential
@@ -111,7 +113,25 @@ async def setup_file_strategy(credential: AsyncTokenCredential, args: Any) -> Fi
     
     if args.uploaded_file:  
         print(f"Using uploaded file {args.uploaded_file}")  
-        list_file_strategy = LocalListFileStrategy(path_pattern=args.uploaded_file, verbose=args.verbose)  
+        #list_file_strategy = LocalListFileStrategy(path_pattern=args.uploaded_file, verbose=args.verbose)  
+        
+        
+        # Get the URL of the blob from the command line arguments    
+        blob_url = args.uploaded_file  
+    
+        # Download the blob to a file    
+        blob_client = BlobClient.from_blob_url(blob_url)    
+        download_stream = blob_client.download_blob()    
+        downloaded_file_path = 'downloaded_file.pdf'  
+        with open(downloaded_file_path, 'wb') as download_file:    
+            download_file.write(download_stream.readall())    
+    
+        # Use the downloaded file  
+        list_file_strategy = LocalListFileStrategy(path_pattern=downloaded_file_path, verbose=args.verbose)  
+                
+            
+        
+        
     elif args.datalakestorageaccount:    
     # if args.datalakestorageaccount:
         adls_gen2_creds = credential if is_key_empty(args.datalakekey) else args.datalakekey

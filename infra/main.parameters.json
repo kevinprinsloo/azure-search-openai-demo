@@ -63,7 +63,7 @@
       "value": "${AZURE_STORAGE_SKU=Standard_LRS}"
     },
     "chatGptDeploymentName": {
-      "value": "${AZURE_OPENAI_CHATGPT_DEPLOYMENT=chat}"
+      "value": "${AZURE_OPENAI_CHATGPT_DEPLOYMENT=gpt-4-32k}"
     },
     "embeddingDeploymentName": {
       "value": "${AZURE_OPENAI_EMB_DEPLOYMENT=embedding}"
@@ -109,6 +109,18 @@
     },
     "allowedOrigin": {
       "value": "${ALLOWED_ORIGIN}"
-    }
+    },
+    "azureStorageConnectionString": {  
+      "value": "${AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=stljdljgw3xjfgq;AccountKey=mabxRGpaP6hgHCUjQkQfYfRcGpVReV2aOFDMGlTQTfZmOm/TAPvQ8oWGvqyYQ9IKx+aMC2Vbgnh5+AStz66nRw==;EndpointSuffix=core.windows.net}"  
+    },  
+    "azureStorageContainer": {  
+      "value": "${AZURE_STORAGE_CONTAINER=content}"  
+    },  
+    "azureStorageContainerRubric": {  
+      "value": "${AZURE_STORAGE_CONTAINER_RUBRIC=rubric}"  
+    },  
+    "backendUri": {  
+      "value": "${BACKEND_URI=https://app-backend-ljdljgw3xjfgq.azurewebsites.net}"  
+    }  
   }
 }
