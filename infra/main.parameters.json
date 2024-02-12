@@ -111,7 +111,7 @@
       "value": "${ALLOWED_ORIGIN}"
     },
     "azureStorageConnectionString": {  
-      "value": "${AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=stljdljgw3xjfgq;AccountKey=mabxRGpaP6hgHCUjQkQfYfRcGpVReV2aOFDMGlTQTfZmOm/TAPvQ8oWGvqyYQ9IKx+aMC2Vbgnh5+AStz66nRw==;EndpointSuffix=core.windows.net}"  
+      "value": "${AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=stg7a4wrqep6ux4;AccountKey=DGmt37BUlaGcAKPPL/4gZ/88qKMd9jBkXZXEqz6zyM5yjFIzo/KTR0ZrUIzYHHVrHB3a4jVxAHfp+AStnK9Wwg==;EndpointSuffix=core.windows.net}"  
     },  
     "azureStorageContainer": {  
       "value": "${AZURE_STORAGE_CONTAINER=content}"  
@@ -120,7 +120,7 @@
       "value": "${AZURE_STORAGE_CONTAINER_RUBRIC=rubric}"  
     },  
     "backendUri": {  
-      "value": "${BACKEND_URI=https://app-backend-ljdljgw3xjfgq.azurewebsites.net}"  
+      "value": "${BACKEND_URI=https://app-backend-g7a4wrqep6ux4.azurewebsites.net}" 
     }  
   }
 }
