@@ -13,19 +13,21 @@ import Select from "react-select";
 import Alert from "react-bootstrap/Alert";
 
 import Papa from "papaparse";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCloud } from "@fortawesome/free-solid-svg-icons";
-
-interface ParseResults {
-    data: any[][];
-    errors: any[];
-    meta: any;
-}
 
 interface ResponseItem {
     criterion: string;
     response: string;
     choices: ChatAppResponse["choices"];
+}
+
+//  MAIN !!!
+
+interface ParseResults {
+    data: any[][];
+    errors: any[];
+    meta: any;
 }
 
 const RubricEvaluation = () => {
@@ -233,59 +235,58 @@ const RubricEvaluation = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadedFiles, setUploadedFiles] = useState<{ fileName: string; fileUrl: string }[]>([]);
 
-    const handleFileUpload_pdf = (fileList: FileList | null) => {  
-        if (fileList && fileList.length > 0) {  
-            setIsUploading(true);  
-            const file = fileList[0];  
-            setUploadedFileName(file.name);  
-      
-            // Create a FormData object and append the file  
-            const formData = new FormData();  
-            formData.append("file", file);  
-      
-            // Create a new XMLHttpRequest  
-            const xhr = new XMLHttpRequest();  
-      
-            // Set up the request  
-            xhr.open("POST", "/upload_pdf", true);  
-      
-            // Set up a listener to track upload progress  
-            xhr.upload.onprogress = event => {  
-                if (event.lengthComputable) {  
-                    const percentComplete = Math.round((event.loaded / event.total) * 100);  
-                    setUploadProgress(percentComplete); // Update the state with the progress  
-                }  
-            };  
-      
-            // When a file is uploaded, add an object containing the file name and the SAS URL to uploadedFiles  
-            xhr.onloadend = () => {  
-                if (xhr.status === 200) {  
-                    console.log("File upload successful");  
-      
-                    // The backend should return a success message  
-                    const responseMessage = xhr.responseText;  
-      
-                    console.log(responseMessage); // Log the response message  
-      
-                    // Add the uploaded file to the state  
-                    setUploadedPdfFiles(prevState => [...prevState, { fileName: file.name, fileUrl: '' }]);  
-                } else {  
-                    console.error("File upload failed");  
-                }  
-                setIsUploading(false);  
-                setUploadProgress(0); // Reset the progress  
-            };  
-      
-            // Send the FormData  
-            xhr.send(formData);  
-        }  
-    };  
-      
-    const clearResponses = () => {  
-        setResponses([]);  
-        setRunAnalysis(false);  
-    };  
-    
+    const handleFileUpload_pdf = (fileList: FileList | null) => {
+        if (fileList && fileList.length > 0) {
+            setIsUploading(true);
+            const file = fileList[0];
+            setUploadedFileName(file.name);
+
+            // Create a FormData object and append the file
+            const formData = new FormData();
+            formData.append("file", file);
+
+            // Create a new XMLHttpRequest
+            const xhr = new XMLHttpRequest();
+
+            // Set up the request
+            xhr.open("POST", "/upload_pdf", true);
+
+            // Set up a listener to track upload progress
+            xhr.upload.onprogress = event => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    setUploadProgress(percentComplete); // Update the state with the progress
+                }
+            };
+
+            // When a file is uploaded, add an object containing the file name and the SAS URL to uploadedFiles
+            xhr.onloadend = () => {
+                if (xhr.status === 200) {
+                    console.log("File upload successful");
+
+                    // The backend should return a success message
+                    const responseMessage = xhr.responseText;
+
+                    console.log(responseMessage); // Log the response message
+
+                    // Add the uploaded file to the state
+                    setUploadedPdfFiles(prevState => [...prevState, { fileName: file.name, fileUrl: "" }]);
+                } else {
+                    console.error("File upload failed");
+                }
+                setIsUploading(false);
+                setUploadProgress(0); // Reset the progress
+            };
+
+            // Send the FormData
+            xhr.send(formData);
+        }
+    };
+
+    const clearResponses = () => {
+        setResponses([]);
+        setRunAnalysis(false);
+    };
 
     const handleFileUpload_csv = (fileList: FileList | null) => {
         if (fileList && fileList.length > 0) {
@@ -562,7 +563,13 @@ const RubricEvaluation = () => {
                     <Modal.Title>Upload PDF</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <input ref={fileInputRef} type="file" accept=".pdf" style={{ display: "none" }} onChange={event => handleFileUpload_pdf(event.target.files)} />
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf"
+                        style={{ display: "none" }}
+                        onChange={event => handleFileUpload_pdf(event.target.files)}
+                    />
                     <div id={styles.drop_zone} onDragOver={onDragOver} onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
                         {isUploading ? (
                             <p>Uploading {uploadedFileName}...</p>
