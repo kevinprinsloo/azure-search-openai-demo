@@ -12,9 +12,9 @@ import Button from "react-bootstrap/Button";
 import Select from "react-select";
 import Alert from "react-bootstrap/Alert";
 
-import Papa from "papaparse";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCloud } from "@fortawesome/free-solid-svg-icons";
+import Papa from "papaparse";
 
 interface ResponseItem {
     criterion: string;
@@ -22,7 +22,7 @@ interface ResponseItem {
     choices: ChatAppResponse["choices"];
 }
 
-//  MAIN !!!
+//  DEV
 
 interface ParseResults {
     data: any[][];
