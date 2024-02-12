@@ -21,6 +21,7 @@ from prepdocslib.listfilestrategy import (
     ADLSGen2ListFileStrategy,
     ListFileStrategy,
     LocalListFileStrategy,
+    AzureBlobListFileStrategy,
 )
 from prepdocslib.pdfparser import DocumentAnalysisPdfParser, LocalPdfParser, PdfParser
 from prepdocslib.strategy import SearchInfo, Strategy
@@ -111,29 +112,35 @@ async def setup_file_strategy(credential: AsyncTokenCredential, args: Any) -> Fi
     print("Processing files...")
     list_file_strategy: ListFileStrategy
     
+    # if args.uploaded_file:  
+    #     print(f"Using uploaded file {args.uploaded_file}")  
+    #     #list_file_strategy = LocalListFileStrategy(path_pattern=args.uploaded_file, verbose=args.verbose)  
+        
+        
+    #     # Get the URL of the blob from the command line arguments    
+    #     blob_url = args.uploaded_file  
+    
+    #     # Download the blob to a file    
+    #     blob_client = BlobClient.from_blob_url(blob_url)    
+    #     download_stream = blob_client.download_blob()    
+    #     downloaded_file_path = 'downloaded_file.pdf'  
+    #     with open(downloaded_file_path, 'wb') as download_file:    
+    #         download_file.write(download_stream.readall())    
+    
+    #     # Use the downloaded file  
+    #     list_file_strategy = LocalListFileStrategy(path_pattern=downloaded_file_path, verbose=args.verbose)   
+    
     if args.uploaded_file:  
-        print(f"Using uploaded file {args.uploaded_file}")  
-        #list_file_strategy = LocalListFileStrategy(path_pattern=args.uploaded_file, verbose=args.verbose)  
-        
-        
-        # Get the URL of the blob from the command line arguments    
-        blob_url = args.uploaded_file  
-    
-        # Download the blob to a file    
-        blob_client = BlobClient.from_blob_url(blob_url)    
-        download_stream = blob_client.download_blob()    
-        downloaded_file_path = 'downloaded_file.pdf'  
-        with open(downloaded_file_path, 'wb') as download_file:    
-            download_file.write(download_stream.readall())    
-    
-        # Use the downloaded file  
-        list_file_strategy = LocalListFileStrategy(path_pattern=downloaded_file_path, verbose=args.verbose)  
+        storage_creds = credential if is_key_empty(args.storagekey) else args.storagekey          
+        print(f"Using uploaded file {args.uploaded_file}")    
+        list_file_strategy = AzureBlobListFileStrategy(  
+            storage_account=args.storageaccount,  
+            container_name=args.container,  
+            credential=storage_creds,  
+            verbose=args.verbose,  
+        )        
                 
-            
-        
-        
     elif args.datalakestorageaccount:    
-    # if args.datalakestorageaccount:
         adls_gen2_creds = credential if is_key_empty(args.datalakekey) else args.datalakekey
         print(f"Using Data Lake Gen2 Storage Account {args.datalakestorageaccount}")
         list_file_strategy = ADLSGen2ListFileStrategy(

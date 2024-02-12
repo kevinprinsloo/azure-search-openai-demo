@@ -215,67 +215,8 @@ def auth_setup():
 def config():
     return jsonify({"showGPT4VOptions": current_app.config[CONFIG_GPT4V_DEPLOYED]})
 
-# @bp.route('/upload', methods=['POST'])
-# async def upload_file():
-    
-#     AZURE_FORMRECOGNIZER_SERVICE=os.environ["AZURE_FORMRECOGNIZER_SERVICE"]
-#     AZURE_STORAGE_ACCOUNT = os.environ["AZURE_STORAGE_ACCOUNT"]
-#     AZURE_STORAGE_CONTAINER = os.environ["AZURE_STORAGE_CONTAINER"]
-#     AZURE_SEARCH_SERVICE = os.environ["AZURE_SEARCH_SERVICE"]
-#     AZURE_SEARCH_INDEX = os.environ["AZURE_SEARCH_INDEX"]
-#     OPENAI_HOST = os.getenv("OPENAI_HOST", "azure")
-#     AZURE_OPENAI_SERVICE = os.getenv("AZURE_OPENAI_SERVICE")
-#     AZURE_OPENAI_EMB_DEPLOYMENT = os.getenv("AZURE_OPENAI_EMB_DEPLOYMENT") if OPENAI_HOST == "azure" else None
-#     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-#     OPENAI_ORGANIZATION = os.getenv("OPENAI_ORGANIZATION")
-    
-#     # Check if a file was sent
-#     files = await request.files
-#     if 'file' not in files:
-#         return 'No file part', 400
-#     file = files['file']
-
-#     # If the user does not select a file, the browser might
-#     # submit an empty part without a filename.
-#     if file.filename == '':
-#         return 'No selected file', 400
-
-#     # Save the file to the 'data' folder which is at the same level as 'app'
-#     filename = secure_filename(file.filename)
-#     script_dir = os.path.dirname(os.path.realpath(__file__))
-#     base_dir = os.path.join(script_dir, '..', '..')  # Move up two levels to the parent directory of 'app'
-#     data_dir = os.path.join(base_dir, 'data')  # Access the 'data' directory
-#     file_path = os.path.join(data_dir, filename)
-#     venv_python_path = os.path.join(base_dir, 'scripts', '.venv', 'bin', 'python3')
-#     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-#     await file.save(file_path)
-
-#     # Construct the path to the 'prepdocs.py' script which is also at the same level as 'app'
-#     script_path = os.path.join(base_dir, 'scripts', 'prepdocs.py')
-#     # Call the prepdocs script with the --uploaded_file argument
-    
-#     subprocess_args = [venv_python_path, script_path, '--uploaded_file', file_path,
-#                     '--formrecognizerservice', AZURE_FORMRECOGNIZER_SERVICE,
-#                     '--storageaccount', AZURE_STORAGE_ACCOUNT,
-#                     '--container', AZURE_STORAGE_CONTAINER,
-#                     '--searchservice', AZURE_SEARCH_SERVICE,
-#                     '--index', AZURE_SEARCH_INDEX,
-#                     '--openaiservice', AZURE_OPENAI_SERVICE,
-#                     '--openaideployment', AZURE_OPENAI_EMB_DEPLOYMENT]
-
-#     if OPENAI_API_KEY:
-#         subprocess_args.extend(['--openaimodelname', OPENAI_API_KEY,
-#                                 '--openaikey', OPENAI_API_KEY])
-
-#     if OPENAI_ORGANIZATION:  
-#         subprocess_args.extend(['--openaiorg', OPENAI_ORGANIZATION])  
-
-#     subprocess.run(subprocess_args)
-    
-#     return 'File uploaded and processed successfully'
-
-@bp.route('/upload', methods=['POST'])
-async def upload_file():
+@bp.route('/upload_pdf', methods=['POST'])
+async def upload_file_pdf():
     
     AZURE_FORMRECOGNIZER_SERVICE=os.environ["AZURE_FORMRECOGNIZER_SERVICE"]
     AZURE_STORAGE_ACCOUNT = os.environ["AZURE_STORAGE_ACCOUNT"]
@@ -387,8 +328,6 @@ async def upload_rubric():
     sas_url = blob_client.url + "?" + sas_token
 
     return sas_url  # Return the SAS URL of the uploaded file or the default CSV file
-
-
 
 
 @bp.route('/get_csv_sas_url')

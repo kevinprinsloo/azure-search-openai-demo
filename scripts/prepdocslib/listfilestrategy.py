@@ -12,6 +12,7 @@ from azure.storage.filedatalake.aio import (
     DataLakeServiceClient,
 )
 
+from azure.storage.blob.aio import BlobServiceClient 
 
 class File:
     """
@@ -101,6 +102,35 @@ class LocalListFileStrategy(ListFileStrategy):
             md5_f.write(existing_hash)
 
         return False
+  
+class AzureBlobListFileStrategy(ListFileStrategy):  
+    """  
+    Concrete strategy for listing files that are located in Azure Blob Storage  
+    """  
+  
+    def __init__(  
+        self,  
+        connection_string: str,  
+        container_name: str,  
+        verbose: bool = False,  
+    ):  
+        self.connection_string = connection_string  
+        self.container_name = container_name  
+        self.verbose = verbose  
+  
+    async def list_paths(self) -> AsyncGenerator[str, None]:  
+        blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)  
+        container_client = blob_service_client.get_container_client(self.container_name)  
+        async for blob in container_client.list_blobs():  
+            yield blob.name  
+  
+    async def list(self) -> AsyncGenerator[File, None]:  
+        blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)  
+        container_client = blob_service_client.get_container_client(self.container_name)  
+        async for path in self.list_paths():  
+            blob_client = container_client.get_blob_client(path)  
+            stream = await blob_client.download_blob()  
+            yield File(content=stream.readall())  
 
 
 class ADLSGen2ListFileStrategy(ListFileStrategy):
